@@ -32,7 +32,7 @@ RUN echo "deb http://mirrors.aliyun.com/ubuntu/ focal main restricted" > /etc/ap
 
 # Install utility tools
 RUN apt-get update -y && \
-    apt-get install -y coreutils dnsutils iputils-ping iproute2 telnet curl vim less wget graphviz unzip tcpdump gdb && \
+    apt-get install -y coreutils dnsutils iputils-ping iproute2 telnet curl vim less wget graphviz unzip tcpdump gdb iptables net-tools && \
     apt-get clean
 
 # Install Go

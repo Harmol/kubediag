@@ -62,6 +62,16 @@ func RegisterProcessors(mgr manager.Manager,
 		setupLog.Error(err, "unable to create processor", "processors", "containerCollector")
 		return fmt.Errorf("unable to create processor: %v", err)
 	}
+	netInfoCollector, err := kubecollector.NewNetInfoCollector(
+		context.Background(),
+		ctrl.Log.WithName("processor/netInfoCollector"),
+		opts.DockerEndpoint,
+		featureGate.Enabled(features.NetInfoCollector),
+	)
+	if err != nil {
+		setupLog.Error(err, "unable to create processor", "processors", "netInfoCollector")
+		return fmt.Errorf("unable to create processor: %v", err)
+	}
 	processCollector := systemcollector.NewProcessCollector(
 		context.Background(),
 		ctrl.Log.WithName("processor/processCollector"),
@@ -143,6 +153,7 @@ func RegisterProcessors(mgr manager.Manager,
 	router.HandleFunc("/processor/podListCollector", podListCollector.Handler)
 	router.HandleFunc("/processor/podDetailCollector", podDetailCollector.Handler)
 	router.HandleFunc("/processor/containerCollector", containerCollector.Handler)
+	router.HandleFunc("/processor/netinfoCollector", netInfoCollector.Handler)
 	router.HandleFunc("/processor/processCollector", processCollector.Handler)
 	router.HandleFunc("/processor/dockerInfoCollector", dockerInfoCollector.Handler)
 	router.HandleFunc("/processor/dockerdGoroutineCollector", dockerdGoroutineCollector.Handler)

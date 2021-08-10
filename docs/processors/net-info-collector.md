@@ -1,0 +1,260 @@
+# Net Info Collector
+
+Net Info Collector 是一个 [Processor](../design/processor.md)，用户可以通过 Net Info Collector 获取节点上 特定容器网络信息。
+
+## 背景
+
+在诊断过程中，用户可能需要获取节点上 容器网络信息。通过引入 Net Info Collector 可以满足该需求。
+
+## 实现
+
+Net Info Collector 按照 [Processor](../design/processor.md) 规范实现。通过 Operation 可以在 KubeDiag 中注册 Net Info Collector，执行下列命令可以查看已注册的 Net  Info Collector：
+
+```bash
+$ kubectl get operation net-info-collector -o yaml
+apiVersion: diagnosis.kubediag.org/v1
+kind: Operation
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"diagnosis.kubediag.org/v1","kind":"Operation","metadata":{"annotations":{},"name":"net-info-collector"},"spec":{"processor":{"httpServer":{"path":"/processor/netinfoCollector","scheme":"http"},"timeoutSeconds":60}}}
+  creationTimestamp: "2021-08-09T07:44:33Z"
+  generation: 3
+  managedFields:
+  - apiVersion: diagnosis.kubediag.org/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:kubectl.kubernetes.io/last-applied-configuration: {}
+      f:spec:
+        .: {}
+        f:processor:
+          .: {}
+          f:httpServer:
+            .: {}
+            f:path: {}
+            f:scheme: {}
+          f:timeoutSeconds: {}
+    manager: kubectl-client-side-apply
+    operation: Update
+    time: "2021-08-09T07:44:33Z"
+  name: net-info-collector
+  resourceVersion: "18857"
+  selfLink: /apis/diagnosis.kubediag.org/v1/operations/operation
+  uid: f6344f8f-d0a7-423a-ae52-c0ac226ab949
+spec:
+  processor:
+    httpServer:
+      path: /processor/netinfoCollector
+      scheme: http
+    timeoutSeconds: 60
+
+
+```
+
+### HTTP 请求格式
+
+Net Info Collector 处理的请求必须为 POST 类型，处理的 HTTP 请求中包含容器id的JSON格式请求体。
+
+#### HTTP 请求
+
+POST /processor/netInfoCollector
+
+```json
+{
+    "id": "container_id"
+}
+```
+
+
+
+#### 返回体参数
+
+JSON 返回体格式为 JSON 对象，对象中包含存有容器网络信息的 String 键值对。键为 `collector.kubernetes.container.Pid, collector.kubernetes.container.ipaddr, collector.kubernetes.container.Nat, collector.kubernetes.container.Nat, collector.kubernetes.container.Route`，值为：
+
+| Scheme | Description |
+|-|-|
+| Pid | 容器Pid |
+| Ipaddr | 容器ip信息 |
+| Nat | Nat表信息 |
+| Route | 路由信息 |
+
+### 举例说明
+
+一次节点上 Docker 系统信息采集操作执行的流程如下：
+
+1. KubeDiag Agent 向 Net Info Collector 发送 HTTP 请求，请求类型为 POST，请求中包含请求体。
+1. Net Info Collector 接收到请求后在节点上获取pid、IP、Nat表、路由信息。
+1.  Net Info Collector 完成采集，返回体中包含JSON数据。查看diagnosis的进度：
+
+```json
+$ kubectl get diagnosis  diagnosis -o yaml
+apiVersion: diagnosis.kubediag.org/v1
+kind: Diagnosis
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"diagnosis.kubediag.org/v1","kind":"Diagnosis","metadata":{"annotations":{},"name":"diagnosis","namespace":"default"},"spec":{"nodeName":"ywh-virtualbox","operationSet":"operationset","parameters":{"id":"5d58b383c36b"}}}
+  creationTimestamp: "2021-08-09T11:12:32Z"
+  generation: 1
+  labels:
+    adjacency-list-hash: 85f757b7ff
+  managedFields:
+  - apiVersion: diagnosis.kubediag.org/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:annotations:
+          .: {}
+          f:kubectl.kubernetes.io/last-applied-configuration: {}
+      f:spec:
+        .: {}
+        f:nodeName: {}
+        f:operationSet: {}
+        f:parameters:
+          .: {}
+          f:id: {}
+    manager: kubectl-client-side-apply
+    operation: Update
+    time: "2021-08-09T11:12:32Z"
+  - apiVersion: diagnosis.kubediag.org/v1
+    fieldsType: FieldsV1
+    fieldsV1:
+      f:metadata:
+        f:labels:
+          .: {}
+          f:adjacency-list-hash: {}
+      f:status:
+        .: {}
+        f:checkpoint:
+          .: {}
+          f:nodeIndex: {}
+          f:pathIndex: {}
+        f:conditions: {}
+        f:operationResults:
+          .: {}
+          f:collector.kubernetes.container.Nat: {}
+          f:collector.kubernetes.container.Pid: {}
+          f:collector.kubernetes.container.Route: {}
+          f:collector.kubernetes.container.ipaddr: {}
+        f:phase: {}
+        f:startTime: {}
+        f:succeededPath: {}
+    manager: kubediag
+    operation: Update
+    time: "2021-08-09T11:12:32Z"
+  name: diagnosis
+  namespace: default
+  resourceVersion: "46556"
+  selfLink: /apis/diagnosis.kubediag.org/v1/namespaces/default/diagnoses/diagnosis
+  uid: 3570b5cb-b60b-4b30-b586-5fdbd43d667f
+spec:
+  nodeName: ywh-virtualbox
+  operationSet: operationset
+  parameters:
+    id: 5d58b383c36b
+status:
+  checkpoint:
+    nodeIndex: 0
+    pathIndex: 0
+  conditions:
+  - lastTransitionTime: "2021-08-09T11:12:32Z"
+    message: Diagnosis is accepted by agent on node ywh-virtualbox
+    reason: DiagnosisAccepted
+    status: "True"
+    type: Accepted
+  - lastTransitionTime: "2021-08-09T11:12:32Z"
+    message: Diagnosis is completed
+    reason: DiagnosisComplete
+    status: "True"
+    type: Complete
+  operationResults:
+    collector.kubernetes.container.Nat: |
+      # Generated by iptables-save v1.8.4 on Mon Aug  9 11:12:32 2021
+      *nat
+      :PREROUTING ACCEPT [0:0]
+      :INPUT ACCEPT [0:0]
+      :OUTPUT ACCEPT [3:194]
+      :POSTROUTING ACCEPT [1:60]
+      :DOCKER - [0:0]
+      :KUBE-KUBELET-CANARY - [0:0]
+      :KUBE-MARK-DROP - [0:0]
+      :KUBE-MARK-MASQ - [0:0]
+      :KUBE-NODEPORTS - [0:0]
+      :KUBE-POSTROUTING - [0:0]
+      :KUBE-PROXY-CANARY - [0:0]
+      :KUBE-SEP-57RLHNIUNJB3UCIZ - [0:0]
+      :KUBE-SEP-OGNOLD2JUSLFPOMZ - [0:0]
+      :KUBE-SEP-V77MQM3SXWDFNOE7 - [0:0]
+      :KUBE-SERVICES - [0:0]
+      :KUBE-SVC-4C5RWIUXXEJIMAZ7 - [0:0]
+      :KUBE-SVC-GAVC2FC3SJHWEMW6 - [0:0]
+      :KUBE-SVC-NPX46M4PTMTKRN6Y - [0:0]
+      -A PREROUTING -m comment --comment "kubernetes service portals" -j KUBE-SERVICES
+      -A PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
+      -A OUTPUT -m comment --comment "kubernetes service portals" -j KUBE-SERVICES
+      -A OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER
+      -A POSTROUTING -m comment --comment "kubernetes postrouting rules" -j KUBE-POSTROUTING
+      -A POSTROUTING -s 172.17.0.0/16 ! -o docker0 -j MASQUERADE
+      -A POSTROUTING -s 172.17.0.2/32 -d 172.17.0.2/32 -p tcp -m tcp --dport 5000 -j MASQUERADE
+      -A DOCKER -i docker0 -j RETURN
+      -A DOCKER ! -i docker0 -p tcp -m tcp --dport 15000 -j DNAT --to-destination 172.17.0.2:5000
+      -A KUBE-MARK-DROP -j MARK --set-xmark 0x8000/0x8000
+      -A KUBE-MARK-MASQ -j MARK --set-xmark 0x4000/0x4000
+      -A KUBE-POSTROUTING -m mark ! --mark 0x4000/0x4000 -j RETURN
+      -A KUBE-POSTROUTING -j MARK --set-xmark 0x4000/0x0
+      -A KUBE-POSTROUTING -m comment --comment "kubernetes service traffic requiring SNAT" -j MASQUERADE --random-fully
+      -A KUBE-SEP-57RLHNIUNJB3UCIZ -s 10.0.2.15/32 -m comment --comment "kubediag/webhook-service" -j KUBE-MARK-MASQ
+      -A KUBE-SEP-57RLHNIUNJB3UCIZ -p tcp -m comment --comment "kubediag/webhook-service" -m tcp -j DNAT --to-destination 10.0.2.15:9443
+      -A KUBE-SEP-OGNOLD2JUSLFPOMZ -s 10.0.2.15/32 -m comment --comment "default/kubernetes:https" -j KUBE-MARK-MASQ
+      -A KUBE-SEP-OGNOLD2JUSLFPOMZ -p tcp -m comment --comment "default/kubernetes:https" -m tcp -j DNAT --to-destination 10.0.2.15:6443
+      -A KUBE-SEP-V77MQM3SXWDFNOE7 -s 10.0.2.15/32 -m comment --comment "kubediag/kubediag-master:http" -j KUBE-MARK-MASQ
+      -A KUBE-SEP-V77MQM3SXWDFNOE7 -p tcp -m comment --comment "kubediag/kubediag-master:http" -m tcp -j DNAT --to-destination 10.0.2.15:8089
+      -A KUBE-SERVICES -d 10.110.118.37/32 -p tcp -m comment --comment "kubediag/webhook-service cluster IP" -m tcp --dport 443 -j KUBE-SVC-GAVC2FC3SJHWEMW6
+      -A KUBE-SERVICES -d 10.96.0.1/32 -p tcp -m comment --comment "default/kubernetes:https cluster IP" -m tcp --dport 443 -j KUBE-SVC-NPX46M4PTMTKRN6Y
+      -A KUBE-SERVICES -d 10.99.48.43/32 -p tcp -m comment --comment "kubediag/kubediag-master:http cluster IP" -m tcp --dport 8089 -j KUBE-SVC-4C5RWIUXXEJIMAZ7
+      -A KUBE-SERVICES -m comment --comment "kubernetes service nodeports; NOTE: this must be the last rule in this chain" -m addrtype --dst-type LOCAL -j KUBE-NODEPORTS
+      -A KUBE-SVC-4C5RWIUXXEJIMAZ7 -m comment --comment "kubediag/kubediag-master:http" -j KUBE-SEP-V77MQM3SXWDFNOE7
+      -A KUBE-SVC-GAVC2FC3SJHWEMW6 -m comment --comment "kubediag/webhook-service" -j KUBE-SEP-57RLHNIUNJB3UCIZ
+      -A KUBE-SVC-NPX46M4PTMTKRN6Y -m comment --comment "default/kubernetes:https" -j KUBE-SEP-OGNOLD2JUSLFPOMZ
+      COMMIT
+      # Completed on Mon Aug  9 11:12:32 2021
+    collector.kubernetes.container.Pid: "430272"
+    collector.kubernetes.container.Route: |
+      Kernel IP routing table
+      Destination     Gateway         Genmask         Flags Metric Ref    Use Iface
+      default         10.0.2.2        0.0.0.0         UG    100    0        0 enp0s3
+      10.0.2.0        0.0.0.0         255.255.255.0   U     100    0        0 enp0s3
+      link-local      0.0.0.0         255.255.0.0     U     1000   0        0 enp0s3
+      172.17.0.0      0.0.0.0         255.255.0.0     U     0      0        0 docker0
+    collector.kubernetes.container.ipaddr: "1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536
+      qdisc noqueue state UNKNOWN group default qlen 1000\n    link/loopback 00:00:00:00:00:00
+      brd 00:00:00:00:00:00\n    inet 127.0.0.1/8 scope host lo\n       valid_lft
+      forever preferred_lft forever\n    inet6 ::1/128 scope host \n       valid_lft
+      forever preferred_lft forever\n2: enp0s3: <BROADCAST,MULTICAST,UP,LOWER_UP>
+      mtu 1500 qdisc fq_codel state UP group default qlen 1000\n    link/ether 08:00:27:3b:d8:05
+      brd ff:ff:ff:ff:ff:ff\n    inet 10.0.2.15/24 brd 10.0.2.255 scope global dynamic
+      noprefixroute enp0s3\n       valid_lft 84036sec preferred_lft 84036sec\n    inet6
+      fe80::9469:c3ea:3508:3229/64 scope link noprefixroute \n       valid_lft forever
+      preferred_lft forever\n3: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500
+      qdisc noqueue state UP group default \n    link/ether 02:42:7b:82:90:a1 brd
+      ff:ff:ff:ff:ff:ff\n    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0\n
+      \      valid_lft forever preferred_lft forever\n    inet6 fe80::42:7bff:fe82:90a1/64
+      scope link \n       valid_lft forever preferred_lft forever\n5: veth4454b71@if4:
+      <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state
+      UP group default \n    link/ether 52:73:c7:23:f8:95 brd ff:ff:ff:ff:ff:ff link-netnsid
+      0\n    inet6 fe80::5073:c7ff:fe23:f895/64 scope link \n       valid_lft forever
+      preferred_lft forever\n"
+  phase: Succeeded
+  startTime: "2021-08-09T11:12:32Z"
+  succeededPath:
+  - id: 1
+    operation: operation
+
+
+```
+
+
+

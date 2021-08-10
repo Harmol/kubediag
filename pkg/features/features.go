@@ -132,6 +132,12 @@ const (
 	// Owner: @April-Q
 	// Alpha: 0.2.0
 	ElasticsearchCollector featuregate.Feature = "ElasticsearchCollector"
+	// NetInfoCollector manages net information of container on the node
+	//
+	// Mode: agent
+	// Owner: yanwenhao
+	// Alpha: 0.1.0
+	NetInfoCollector featuregate.Feature = "NetInfoCollector"
 )
 
 var (
@@ -162,6 +168,7 @@ var defaultKubeDiagFeatureGates = map[featuregate.Feature]featuregate.FeatureSpe
 	MountInfoCollector:           {Default: true, PreRelease: featuregate.Alpha},
 	SubpathRemountDiagnoser:      {Default: true, PreRelease: featuregate.Alpha},
 	ElasticsearchCollector:       {Default: true, PreRelease: featuregate.Alpha},
+	NetInfoCollector:             {Default: true, PreRelease: featuregate.Alpha},
 }
 
 // KubeDiagFeatureGate indicates whether a given feature is enabled or not and stores flag gates for known features.
