@@ -62,6 +62,13 @@ func RegisterProcessors(mgr manager.Manager,
 		setupLog.Error(err, "unable to create processor", "processors", "containerCollector")
 		return fmt.Errorf("unable to create processor: %v", err)
 	}
+	serviceDetailCollector := kubecollector.NewServiceDetailCollector(
+		context.Background(),
+		ctrl.Log.WithName("process/serviceDetailCollector"),
+		mgr.GetCache(),
+		opts.NodeName,
+		featureGate.Enabled(features.ServiceCollector),
+	)
 	processCollector := systemcollector.NewProcessCollector(
 		context.Background(),
 		ctrl.Log.WithName("processor/processCollector"),
@@ -149,6 +156,7 @@ func RegisterProcessors(mgr manager.Manager,
 	router.HandleFunc("/processor/containerdGoroutineCollector", containerdGoroutineCollector.Handler)
 	router.HandleFunc("/processor/mountInfoCollector", mountInfoCollector.Handler)
 	router.HandleFunc("/processor/elasticsearchCollector", elasticsearchCollector.Handler)
+	router.HandleFunc("/processor/serviceDetailCollector", serviceDetailCollector.Handler)
 	// Handlers for executing specified command.
 	router.HandleFunc("/processor/nodeCordon", nodeCordon.Handler)
 	// Handlers for profiling programs.
