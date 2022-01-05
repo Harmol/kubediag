@@ -4,12 +4,12 @@ apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
   creationTimestamp: null
-  name: mutating-webhook-configuration
+  name: kubediag-mutating-webhook-configuration
 webhooks:
 - clientConfig:
     caBundle: Cg==
     service:
-      name: webhook-service
+      name: kubediag-webhook-service
       namespace: system
       path: /mutate-diagnosis-kubediag-org-v1-diagnosis
   failurePolicy: Fail
@@ -27,7 +27,7 @@ webhooks:
 - clientConfig:
     caBundle: Cg==
     service:
-      name: webhook-service
+      name: kubediag-webhook-service
       namespace: system
       path: /mutate-diagnosis-kubediag-org-v1-operation
   failurePolicy: Fail
@@ -45,7 +45,7 @@ webhooks:
 - clientConfig:
     caBundle: Cg==
     service:
-      name: webhook-service
+      name: kubediag-webhook-service
       namespace: system
       path: /mutate-diagnosis-kubediag-org-v1-operationset
   failurePolicy: Fail
@@ -63,7 +63,7 @@ webhooks:
 - clientConfig:
     caBundle: Cg==
     service:
-      name: webhook-service
+      name: kubediag-webhook-service
       namespace: system
       path: /mutate-diagnosis-kubediag-org-v1-trigger
   failurePolicy: Fail
@@ -84,12 +84,12 @@ apiVersion: admissionregistration.k8s.io/v1beta1
 kind: ValidatingWebhookConfiguration
 metadata:
   creationTimestamp: null
-  name: validating-webhook-configuration
+  name: kubediag-validating-webhook-configuration
 webhooks:
 - clientConfig:
     caBundle: Cg==
     service:
-      name: webhook-service
+      name: kubediag-webhook-service
       namespace: system
       path: /validate-diagnosis-kubediag-org-v1-diagnosis
   failurePolicy: Fail
@@ -107,7 +107,7 @@ webhooks:
 - clientConfig:
     caBundle: Cg==
     service:
-      name: webhook-service
+      name: kubediag-webhook-service
       namespace: system
       path: /validate-diagnosis-kubediag-org-v1-operation
   failurePolicy: Fail
@@ -125,7 +125,7 @@ webhooks:
 - clientConfig:
     caBundle: Cg==
     service:
-      name: webhook-service
+      name: kubediag-webhook-service
       namespace: system
       path: /validate-diagnosis-kubediag-org-v1-operationset
   failurePolicy: Fail
@@ -143,7 +143,7 @@ webhooks:
 - clientConfig:
     caBundle: Cg==
     service:
-      name: webhook-service
+      name: kubediag-webhook-service
       namespace: system
       path: /validate-diagnosis-kubediag-org-v1-trigger
   failurePolicy: Fail
