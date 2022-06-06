@@ -139,6 +139,14 @@ func RegisterProcessors(mgr manager.Manager,
 		featureGate.Enabled(features.ElasticsearchCollector),
 	)
 
+	sonobuoyResultsDiagnoser := kubediagnoser.NewSonobuoyResultsDiagnoser(
+		context.Background(),
+		ctrl.Log.WithName("processor/sonobuoyResultsDiagnoser"),
+		opts.DataRoot,
+		opts.BindAddress,
+		featureGate.Enabled(features.SonobuoyResultsDiagnoser),
+	)
+
 	// Handlers for collecting information.
 	router.HandleFunc("/processor/podListCollector", podListCollector.Handler)
 	router.HandleFunc("/processor/podDetailCollector", podDetailCollector.Handler)
@@ -159,5 +167,6 @@ func RegisterProcessors(mgr manager.Manager,
 	router.HandleFunc("/processor/subpathRemountDiagnoser", subpathRemountDiagnoser.Handler)
 
 	router.HandleFunc("/processor/subpathRemountRecover", subpathRemountRecover.Handler)
+	router.HandleFunc("/processor/sonobuoyResultsDiagnoser", sonobuoyResultsDiagnoser.Handler)
 	return nil
 }
