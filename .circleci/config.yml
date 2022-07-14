@@ -4,6 +4,7 @@ jobs:
   compile_and_test:
     machine: 
       image: ubuntu-2004:202010-01
+      docker_layer_caching: true
     working_directory: ~/go/src/github.com/kubediag/kubediag
     steps:
       - checkout
